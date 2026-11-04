@@ -1,0 +1,44 @@
+{
+  "name": "dsh-jipu",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Jipu manuscript crew for DSH: reader-first long-form novel pipeline, 14 gate scripts, 12 genre libraries.",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "skill/**",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/waafer1/dsh-jipu.git"
+  },
+  "homepage": "https://github.com/waafer1/dsh-jipu#readme",
+  "bugs": {
+    "url": "https://github.com/waafer1/dsh-jipu/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "writing",
+    "novel",
+    "manuscript",
+    "outline"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
