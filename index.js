@@ -3,7 +3,7 @@
  *
  * 一个 `jipu` 工具：
  *   - skill    读 skill/ 下的手册与 references（分段读）
- *   - scripts  列出 14 个门禁脚本
+ *   - scripts  列出 15 个门禁脚本
  *   - roles    列出七个角色设定；给 role 则返回该角色全文（可当 subagent prompt）
  *   - run      在项目根目录跑指定脚本（project 可省略，自动向上找 项目配置.json）
  *   - selftest 跑脚本自检
@@ -150,7 +150,9 @@ async function projectStatus(args) {
 
   if (state) {
     lines.push(`状态：rev ${state.state_revision}，已提交到第 ${state.last_committed_chapter} 章`);
-    const hero = state.characters && (state.characters['埃德温·多恩'] || Object.values(state.characters)[0]);
+    const chars = state.characters || {};
+    const hero = Object.entries(chars).find(([, v]) => String((v && v.role) || '').includes('主角'))?.[1]
+      || Object.values(chars)[0];
     if (hero && hero.cash_copper != null) {
       const c = hero.cash_copper;
       lines.push(`现金：${Math.floor(c / 100)} 银 ${c % 100} 铜（${c} 铜）`);
@@ -185,7 +187,7 @@ export function apply(ctx) {
   ctx.tools.register({
     name: 'jipu',
     description:
-      '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑 14 个门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/召回/账本体检/开项目/选型体检/能力自测）。' +
+      '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑 15 个门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/召回/账本体检/种子台账/开项目/选型体检/能力自测）。' +
       'action=skill 读 SKILL.md 或 references（offset/limit 分段）；action=scripts 列脚本；action=roles 列七个角色，给 role 返回设定全文（可作 subagent prompt）；' +
       'action=status 报当前阶段与下一章；action=seeds 按类目/主线列种子、查重或记账；action=run 在项目根跑脚本（project 可省略，自动向上找 项目配置.json）；action=selftest 跑脚本自检。' +
       '判稿以项目内 08_工具_脚本/ 的脚本为准，本包脚本只用于自检与开新书复制。',
