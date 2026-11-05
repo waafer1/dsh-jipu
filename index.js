@@ -187,14 +187,14 @@ export function apply(ctx) {
     description:
       '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑 14 个门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/召回/账本体检/开项目/选型体检/能力自测）。' +
       'action=skill 读 SKILL.md 或 references（offset/limit 分段）；action=scripts 列脚本；action=roles 列七个角色，给 role 返回设定全文（可作 subagent prompt）；' +
-      'action=status 报当前阶段与下一章；action=run 在项目根跑脚本（project 可省略，自动向上找 项目配置.json）；action=selftest 跑脚本自检。' +
+      'action=status 报当前阶段与下一章；action=seeds 按类目/主线列种子、查重或记账；action=run 在项目根跑脚本（project 可省略，自动向上找 项目配置.json）；action=selftest 跑脚本自检。' +
       '判稿以项目内 08_工具_脚本/ 的脚本为准，本包脚本只用于自检与开新书复制。',
     parameters: {
       type: 'object',
       additionalProperties: false,
       required: ['action'],
       properties: {
-        action: { type: 'string', enum: ['skill', 'scripts', 'roles', 'run', 'selftest', 'status'], description: '要做的动作。' },
+        action: { type: 'string', enum: ['skill', 'scripts', 'roles', 'seeds', 'run', 'selftest', 'status'], description: '要做的动作。' },
         path: { type: 'string', description: 'action=skill 时的相对路径，默认 SKILL.md；如 references/03-门禁手册.md。' },
         offset: { type: 'integer', description: 'action=skill 时的起始行（1 起）。' },
         limit: { type: 'integer', description: 'action=skill 时最多读多少行。' },
@@ -202,6 +202,11 @@ export function apply(ctx) {
         script: { type: 'string', description: 'action=run/selftest 时的脚本名，如 章体检 或 章体检.py。' },
         args: { type: 'array', items: { type: 'string' }, description: '传给脚本的参数。' },
         project: { type: 'string', description: '项目根目录；省略时自动向上找 项目配置.json，再退到当前目录。' },
+        genre: { type: 'string', description: 'action=seeds 时的类目编号，01—12。' },
+        role: { type: 'string', enum: ['主线', '副线', '两用'], description: 'action=seeds 时按用途筛。' },
+        seed: { type: 'string', description: 'action=seeds 时的种子钩子；给了就查重，配合 use=true 则记账。' },
+        chapter: { type: 'string', description: 'action=seeds 记账时的章号，如 012。' },
+        use: { type: 'boolean', description: 'action=seeds 且给了 seed 时，true 表示记进桥段账本。' },
       },
     },
     output: {
@@ -222,6 +227,22 @@ export function apply(ctx) {
     },
     async execute(args) {
       const action = args.action;
+
+      if (action === 'seeds') {
+        const cli = [];
+        if (args.genre) cli.push('--genre', String(args.genre));
+        if (args.role) cli.push('--role', String(args.role));
+        if (args.seed && args.use) {
+          cli.push('--seed', String(args.seed), '--chapter', String(args.chapter || '-'));
+        } else if (args.seed) {
+          cli.push('--check', String(args.seed));
+        } else {
+          cli.push('--list');
+        }
+        const project = args.project || process.env.JIPU_ROOT || (await climbForProject(process.cwd())) || process.cwd();
+        const r = await runPython('种子台账.py', cli, project);
+        return { ...r, text: `[seeds] ${cli.join(' ')}\nexit=${r.exit}\n\n${r.stdout}${r.stderr}` };
+      }
 
       if (action === 'scripts') {
         const list = await listScripts();
