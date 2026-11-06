@@ -97,6 +97,37 @@ CARD_SKELETON = """# 题材定位 · 选型卡
 | 12 | 章节节奏预期（快／中／慢） | |
 """
 
+SETTING_CARD = """# 设定卡（12 行，缺一行不许动笔）
+
+> 作者填。计谱只问不猜；填完跑 `python 08_工具_脚本/设定卡体检.py`。
+
+| # | 字段 | 内容 |
+|---|---|---|
+| 1 | 书名 |  |
+| 2 | 类目 |  |
+| 3 | 频道/读者 |  |
+| 4 | 主角 |  |
+| 5 | 金手指 |  |
+| 6 | 对手 |  |
+| 7 | 本卷目标 |  |
+| 8 | 代价 |  |
+| 9 | 世界铁律 |  |
+| 10 | 禁忌 |  |
+| 11 | 母题 |  |
+| 12 | 结局方向 |  |
+"""
+
+DRAW_SHEET = """# 取材单（第001段）
+
+> 检索完必须填；单没填完不许进糅合。模板见 `07_模板_复用件/取材单模板.md`。
+
+| # | 用途 | 来源库 | 编号 | 取的是什么 | 用在拍/章 | 冷却检查 | 备注 |
+|---|---|---|---|---|---|---|---|
+| 1 |  |  |  |  |  |  |  |
+| 2 |  |  |  |  |  |  |  |
+| 3 |  |  |  |  |  |  |  |
+"""
+
 VIEWS = {
     "上下文.md": "# 上下文（派生视图，勿手改）\n\n> 由 `08_工具_脚本/召回.py` 重渲染。\n",
     "事实词典.md": "# 事实词典（派生视图，勿手改）\n",
@@ -161,6 +192,13 @@ def scaffold(target: Path, title: str) -> dict:
     for name, body in VIEWS.items():
         (target / "06_追踪_状态账本" / name).write_text(body, encoding="utf-8")
     (target / "02_设定_世界与角色" / "题材定位.md").write_text(CARD_SKELETON, encoding="utf-8")
+    (target / "02_设定_世界与角色" / "设定卡.md").write_text(SETTING_CARD, encoding="utf-8")
+    sheet = assets / "取材单模板.md"
+    if sheet.exists():
+        body = sheet.read_text(encoding="utf-8").replace("第NNN段", "第001段")
+    else:
+        body = DRAW_SHEET
+    (target / "03_图纸_大纲与细纲" / "取材单_第001段.md").write_text(body, encoding="utf-8")
     (target / "00-索引.md").write_text(
         f"# {title}\n\n> 进度只看 `06_追踪_状态账本/_tracking-state.json`，本文件不作数。\n\n"
         "## 现在该做什么\n\n- [ ] 填 `02_设定_世界与角色/题材定位.md` 的 12 行选型卡\n"
@@ -171,12 +209,27 @@ def scaffold(target: Path, title: str) -> dict:
     return report
 
 
+def card_done(target: Path) -> bool:
+    p = target / "02_设定_世界与角色" / "设定卡.md"
+    if not p.exists():
+        return False
+    n = 0
+    for line in p.read_text(encoding="utf-8").split("\n"):
+        if not line.strip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 3 and cells[1] != "字段" and cells[2] and not set(cells[2]) <= set("-: "):
+            n += 1
+    return n >= 12
+
+
 def check_nine(target: Path) -> list:
     """九环节自检：缺哪一环报哪一环。"""
     checks = [
         ("选型卡填满", len([l for l in (target / "02_设定_世界与角色" / "题材定位.md")
                             .read_text(encoding="utf-8").split("\n") if l.count("|") >= 3 and l.strip().endswith("|")
                             and l.split("|")[-2].strip()]) >= 12),
+        ("设定卡 12 行齐", card_done(target)),
         ("主角 A 卡", any((target / "02_设定_世界与角色" / "角色").glob("*.md"))),
         ("卷纲", any((target / "03_图纸_大纲与细纲").glob("卷纲*"))),
         ("章纲", any((target / "03_图纸_大纲与细纲").glob("章纲*"))),
