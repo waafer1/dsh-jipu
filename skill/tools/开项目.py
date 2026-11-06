@@ -117,6 +117,18 @@ SETTING_CARD = """# 设定卡（12 行，缺一行不许动笔）
 | 12 | 结局方向 |  |
 """
 
+HERO_CARD = """### 主角（第 1 章 · A 卡）
+一句话：
+在故事里干的活：主角
+他想要：            他怕：            他和主角的账：
+他坚信但错的：
+说话方式：
+可见件：
+位置／归属：
+结局预定：
+名字由来：
+"""
+
 DRAW_SHEET = """# 取材单（第001段）
 
 > 检索完必须填；单没填完不许进糅合。模板见 `07_模板_复用件/取材单模板.md`。
@@ -193,6 +205,7 @@ def scaffold(target: Path, title: str) -> dict:
         (target / "06_追踪_状态账本" / name).write_text(body, encoding="utf-8")
     (target / "02_设定_世界与角色" / "题材定位.md").write_text(CARD_SKELETON, encoding="utf-8")
     (target / "02_设定_世界与角色" / "设定卡.md").write_text(SETTING_CARD, encoding="utf-8")
+    (target / "02_设定_世界与角色" / "角色" / "主角卡.md").write_text(HERO_CARD, encoding="utf-8")
     sheet = assets / "取材单模板.md"
     if sheet.exists():
         body = sheet.read_text(encoding="utf-8").replace("第NNN段", "第001段")
@@ -229,6 +242,7 @@ def check_nine(target: Path) -> list:
         ("选型卡填满", len([l for l in (target / "02_设定_世界与角色" / "题材定位.md")
                             .read_text(encoding="utf-8").split("\n") if l.count("|") >= 3 and l.strip().endswith("|")
                             and l.split("|")[-2].strip()]) >= 12),
+        ("主角卡硬字段", (target / "02_设定_世界与角色" / "角色" / "主角卡.md").exists()),
         ("设定卡 12 行齐", card_done(target)),
         ("主角 A 卡", any((target / "02_设定_世界与角色" / "角色").glob("*.md"))),
         ("卷纲", any((target / "03_图纸_大纲与细纲").glob("卷纲*"))),
