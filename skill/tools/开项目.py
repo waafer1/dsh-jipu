@@ -46,7 +46,7 @@ SUBDIRS = [
 # assets 里哪些去底座、哪些去模板库
 BASE_FILES = ["画面例句库.md", "剧情拆解库.md", "表情图.md", "表现方法学习册.md"]
 TPL_FILES = ["00-引导式选型.md"]
-TPL_DIRS = ["类目模板库", "剧情模板库", "类目桥段库", "结构层库", "人物层库", "素材层库"]
+TPL_DIRS = ["类目模板库", "剧情模板库", "类目桥段库", "结构层库", "人物层库", "素材层库", "对白层库"]
 
 DEFAULT_CONFIG = {
     "book": {"title": "", "genre": "", "style_ruler": "通俗直给", "target_words": 0},
