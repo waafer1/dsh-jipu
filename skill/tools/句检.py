@@ -15,7 +15,7 @@ blocking（7 条）：
   B6 空行连发：连续 2 个以上空行
   B7 括号不配对：（ ）／「 」／《 》
 
-warn（5 条）：
+warn（6 条）：
   W1 段首"然后"
   W2 "虽然"段内无"但/却/可是"
   W3 "因为"段内无"所以/才/因此"
@@ -107,6 +107,16 @@ def check_file(path, long_threshold, show=5):
             warn.append(("W4 的过多", i, f"{s.count('的')} 个"))
         if s.count("很") > 3:
             warn.append(("W5 很过多", i, f"{s.count('很')} 个"))
+        if "“" not in s:
+            run = 0
+            for seg in [x.strip() for x in re.split(r"[。！？]", s) if x.strip()]:
+                if len(seg) <= 6:
+                    run += 1
+                    if run == 3:
+                        warn.append(("W6 碎句连发", i, "连续 3 句 ≤6 字：" + s[:30]))
+                        break
+                else:
+                    run = 0
 
     for seg in SENT_SPLIT.split(text):
         seg = seg.strip()
