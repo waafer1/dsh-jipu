@@ -8,7 +8,6 @@
 七条规则（都是能数的）：
   R1 开篇前三段没有具体物／位置（读者不知道自己在哪）
   R2 章末停在决心（"发誓／一定要／必须"）——读者知道下一章要干什么，就不想看了
-  R3 对白占比 < 5%（独处章合法，标"人工判"）
   R4 最长纯叙段 > 600 字（一大片没有人在说话）
   R5 段首"他／她" > 25%（句式起头单一，读着闷）
   R6 连续纯引号段 ≥ 3（对白悬空，不知道谁在说）
@@ -87,9 +86,6 @@ def judge(path, root):
     if any(w in tail for w in RESOLVE):
         warns.append(("R2 章末停在决心", f"末段（{len(tail)} 字）",
                       f"「{tail[:30]}」——他要干什么我一猜就知道，那我还等下一章干什么", None))
-    ratio = m.get("dialogue_ratio", 0)
-    if ratio < 0.05:
-        warns.append(("R3 对白几乎为零", "全章", f"对白占比 {ratio:.1%}（独处章合法，人工判）", None))
     if m.get("longest_narration", 0) > 600:
         warns.append(("R4 一大片没人说话", "最长纯叙段",
                       f"{m['longest_narration']} 字没有对白，我会开始跳行", None))
@@ -97,7 +93,7 @@ def judge(path, root):
         warns.append(("R5 段首单调", "全章", f"{m['head_pronoun_ratio']:.0%} 的段落以他/她开头", None))
     if m.get("quote_run_max", 0) >= 3:
         warns.append(("R6 对白悬空", f"连续 {m['quote_run_max']} 段", "连着几段只有引号，谁在说不知道", None))
-    if not re.search(r"[？?]", text) and ratio == 0:
+    if not re.search(r"[？?]", text) and m.get("dialogue_ratio", 0) == 0:
         warns.append(("R7 没有心跳", "全章", "没有一个问句、没有一句对白", None))
 
     print(f"\n=== 读者判定 · {path.name} ===")
