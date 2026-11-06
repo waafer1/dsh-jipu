@@ -12,6 +12,7 @@
   R5 段首"他／她" > 25%（句式起头单一，读着闷）
   R6 连续纯引号段 ≥ 3（对白悬空，不知道谁在说）
   R7 全章没有一个问句、没有一处对白（没有心跳）
+  R8 苦词 ≥4 且得词 0（苦多无得，读者看不到翻身）
 
 打分五项（各 20）：开篇抓力／语言通畅／连续性／节奏／爽点兑现。
 前四项用读数算，**第五项机器判不了，留给人填**——不许编分。
@@ -34,6 +35,8 @@ HERE = Path(__file__).resolve().parent
 CONCRETE = ("枚|文|斤|两|袋|瓶|碗|把|根|株|块|张|只|条|件|寸|尺|一步|一里")
 PLACE = ("门口|台阶|屋里|屋外|院里|街上|巷|窗口|床|桌|柜|墙角|檐下|灶|井|路边|树下|柜台")
 RESOLVE = ("发誓", "一定要", "必须", "下定决心", "心里暗暗", "他在心里")
+KU = ("哭", "痛", "惨", "穷", "病", "死", "血", "跪", "求", "冻", "饿", "挨打", "受气", "屈辱")
+DE = ("得", "赚", "赢", "拿到", "升", "笑", "松", "放心", "抢到", "省下", "多出", "第一")
 
 
 def find_root() -> Path:
@@ -89,6 +92,10 @@ def judge(path, root):
     if m.get("longest_narration", 0) > 600:
         warns.append(("R4 一大片没人说话", "最长纯叙段",
                       f"{m['longest_narration']} 字没有对白，我会开始跳行", None))
+    ku = sum(text.count(w) for w in KU)
+    de = sum(text.count(w) for w in DE)
+    if ku >= 4 and de == 0:
+        warns.append(("R8 苦多无得", "全章", f"苦词 {ku} 次、得词 0 次——读者看不到翻身", None))
     if m.get("head_pronoun_ratio", 0) > 0.25:
         warns.append(("R5 段首单调", "全章", f"{m['head_pronoun_ratio']:.0%} 的段落以他/她开头", None))
     if m.get("quote_run_max", 0) >= 3:
