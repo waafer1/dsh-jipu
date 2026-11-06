@@ -110,7 +110,7 @@ SETTING_CARD = """# 设定卡（12 行，缺一行不许动笔）
 | 5 | 金手指 |  |
 | 6 | 对手 |  |
 | 7 | 本卷目标 |  |
-| 8 | 代价 |  |
+| 8 | 代价（可选） |  |
 | 9 | 世界铁律 |  |
 | 10 | 禁忌 |  |
 | 11 | 母题 |  |
@@ -220,7 +220,7 @@ def card_done(target: Path) -> bool:
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) >= 3 and cells[1] != "字段" and cells[2] and not set(cells[2]) <= set("-: "):
             n += 1
-    return n >= 12
+    return n >= 11
 
 
 def check_nine(target: Path) -> list:

@@ -29,7 +29,7 @@ FIELDS = [
     ('金手指', ('金手指', '能力')),
     ('对手', ('对手',)),
     ('本卷目标', ('本卷目标', '目标')),
-    ('代价', ('代价',)),
+    ('代价', ('代价',)),  # 可选
     ('世界铁律', ('世界铁律', '世界')),
     ('禁忌', ('禁忌', '不许出现')),
     ('母题', ('母题',)),
@@ -52,7 +52,7 @@ TEMPLATE = '''# 设定卡（12 行，缺一行不许动笔）
 | 5 | 金手指 |  |
 | 6 | 对手 |  |
 | 7 | 本卷目标 |  |
-| 8 | 代价 |  |
+| 8 | 代价（可选） |  |
 | 9 | 世界铁律 |  |
 | 10 | 禁忌 |  |
 | 11 | 母题 |  |
@@ -106,8 +106,12 @@ def check(path):
     got = parse_card(text)
     problems = []
     warns = []
+    OPTIONAL = {'代价'}
     for canon, _ in FIELDS:
         val = got.get(canon, '').strip()
+        if not val and canon in OPTIONAL:
+            print(f"{'OPTIONAL':8} {canon}: （可选，未填）")
+            continue
         status = 'OK' if val else 'MISSING'
         if not val:
             problems.append(canon)
