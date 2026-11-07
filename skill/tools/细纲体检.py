@@ -13,6 +13,7 @@
   - 地点：一个具体场所，不许写“某地”
   - 事件：谁要什么 → 他做了什么 → 结果
   - 追卡：这件事追到哪张人物卡的哪一条（主角卡·他想要……）
+  - 桥段：本章用哪 2 个 Q 号（最多 2 个；查 11-主题预设）
   - 改账：本章改了 欠／怕／信 哪一条；一条没改 → FAIL
 退出码：0 通过；1 缺项；--selftest 失败 1。
 """
@@ -24,7 +25,7 @@ import re
 import sys
 import tempfile
 
-FIELDS = ['档', '图', '话', '轴', '出场人物', '地点', '事件', '追卡', '改账']
+FIELDS = ['档', '图', '话', '轴', '出场人物', '地点', '事件', '追卡', '改账', '桥段']
 
 
 def find_root(start=None):
@@ -74,6 +75,10 @@ def check_file(path):
         problems.append('改账（要写欠/怕/信哪条变了）')
     if got.get('追卡') and '卡' not in got['追卡']:
         problems.append('追卡（要写清追到哪张卡）')
+    if got.get('桥段'):
+        qs = set(re.findall(r'Q-\d+', got['桥段']))
+        if len(qs) > 2:
+            problems.append(f"桥段超过 2 个（{len(qs)} 个）")
     if problems:
         print(f'\n{name}: FAIL —— ' + '、'.join(problems))
         return 1
@@ -95,15 +100,18 @@ def selftest():
 事件：陈九想赊一担炭，掌柜只给半担，他问出一条“湿炭折半”的规矩
 追卡：主角卡·他想要（地契）；对手卡·账（欠三条命）
 改账：欠——他又欠了掌柜半担炭
+桥段：Q-101＋Q-107
 '''
     io.open(p, 'w', encoding='utf-8').write(full)
     rc_ok = check_file(p)
     io.open(p, 'w', encoding='utf-8').write(full.replace('地点：东市炭棚\n', '地点：\n'))
     rc_bad = check_file(p)
+    io.open(p, 'w', encoding='utf-8').write(full.replace('桥段：Q-101＋Q-107', '桥段：Q-101＋Q-107＋Q-112'))
+    rc_many = check_file(p)
     import shutil
     shutil.rmtree(d, ignore_errors=True)
-    ok = rc_ok == 0 and rc_bad == 1
-    print(f'\n自检：{"通过" if ok else "失败"}（齐 {rc_ok}／缺地点 {rc_bad}）')
+    ok = rc_ok == 0 and rc_bad == 1 and rc_many == 1
+    print(f'\n自检：{"通过" if ok else "失败"}（齐 {rc_ok}／缺地点 {rc_bad}／桥段超 2 {rc_many}）')
     return 0 if ok else 1
 
 
