@@ -30,7 +30,7 @@ LAYERS = [
     "03_图纸_大纲与细纲",
     "04_正文_成品",
     "05_质检_审计评审节奏",
-    "06_追踪_状态账本",
+    "06_追踪_状态记录",
     "07_模板_复用件",
     "08_工具_脚本",
 ]
@@ -62,6 +62,14 @@ DEFAULT_CONFIG = {
     "hook": {"baseline": "high"},
     "coolpoint": {"density": "high"},
     "pacing": {"slow_streak_max": 3},
+    "metrics": {"l1": ["现金", "死线缺口", "主目标进度"]},
+    "playloop": {
+        "main": "结算型",
+        "sub": "",
+        "beats": 7,
+        "types": [],
+        "momentum_terms": "缺|欠|怕|信",
+    },
 }
 
 STATE_SKELETON = {
@@ -80,6 +88,8 @@ CARD_SKELETON = """# 题材定位 · 选型卡
 
 > 12 行填满才允许写第一章。填不满就回去问，不许留空当默认。
 > 判据：`07_模板_复用件/00-引导式选型.md`
+
+> **主玩法**：__________　**辅玩法**：__________（卡见 `12-玩法循环.md`；定了就写进 `项目配置.json` 的 `playloop`，细纲按它的拍数与型表判）
 
 | # | 项 | 填什么 |
 |---|---|---|
@@ -120,7 +130,7 @@ SETTING_CARD = """# 设定卡（12 行，缺一行不许动笔）
 HERO_CARD = """### 主角（第 1 章 · A 卡）
 一句话：
 在故事里干的活：主角
-他想要：            他怕：            他和主角的账：
+他想要：            他怕：            他和主角的牵扯：
 他坚信但错的：
 说话方式：
 可见件：
@@ -144,9 +154,9 @@ DRAW_SHEET = """# 取材单（第001段）
 VIEWS = {
     "上下文.md": "# 上下文（派生视图，勿手改）\n\n> 由 `08_工具_脚本/召回.py` 重渲染。\n",
     "事实词典.md": "# 事实词典（派生视图，勿手改）\n",
-    "伏笔.md": "# 伏笔账（派生视图，勿手改）\n",
+    "伏笔.md": "# 伏笔簿（派生视图，勿手改）\n",
     "数字登记.md": "# 数字登记（派生视图，勿手改）\n\n| 数字 | 单位 | 出处章 | 含义 |\n|---|---|---|---|\n",
-    "桥段账本.md": "# 桥段账本（派生视图，勿手改）\n\n| 模板号 | 章 | 变体 | 冷却到 |\n|---|---|---|---|\n",
+    "桥段记录.md": "# 桥段记录（派生视图，勿手改）\n\n| 模板号 | 章 | 变体 | 冷却到 |\n|---|---|---|---|\n",
 }
 
 
@@ -199,11 +209,11 @@ def scaffold(target: Path, title: str) -> dict:
     (target / "项目配置.json").write_text(
         json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    (target / "06_追踪_状态账本" / "_tracking-state.json").write_text(
+    (target / "06_追踪_状态记录" / "_tracking-state.json").write_text(
         json.dumps(STATE_SKELETON, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     for name, body in VIEWS.items():
-        (target / "06_追踪_状态账本" / name).write_text(body, encoding="utf-8")
+        (target / "06_追踪_状态记录" / name).write_text(body, encoding="utf-8")
     (target / "02_设定_世界与角色" / "题材定位.md").write_text(CARD_SKELETON, encoding="utf-8")
     (target / "02_设定_世界与角色" / "设定卡.md").write_text(SETTING_CARD, encoding="utf-8")
     (target / "02_设定_世界与角色" / "角色" / "主角卡.md").write_text(HERO_CARD, encoding="utf-8")
@@ -214,7 +224,7 @@ def scaffold(target: Path, title: str) -> dict:
         body = DRAW_SHEET
     (target / "03_图纸_大纲与细纲" / "取材单_第001段.md").write_text(body, encoding="utf-8")
     (target / "00-索引.md").write_text(
-        f"# {title}\n\n> 进度只看 `06_追踪_状态账本/_tracking-state.json`，本文件不作数。\n\n"
+        f"# {title}\n\n> 进度只看 `06_追踪_状态记录/_tracking-state.json`，本文件不作数。\n\n"
         "## 现在该做什么\n\n- [ ] 填 `02_设定_世界与角色/题材定位.md` 的 12 行选型卡\n"
         "- [ ] 建 1 张主角 A 卡（`07_模板_复用件/人物层库/01-人物卡预设.md`）\n"
         "- [ ] 出第一卷卷纲与前 15 章章纲\n",
@@ -249,10 +259,10 @@ def check_nine(target: Path) -> list:
         ("卷纲", any((target / "03_图纸_大纲与细纲").glob("卷纲*"))),
         ("章纲", any((target / "03_图纸_大纲与细纲").glob("章纲*"))),
         ("人物层库", (target / "07_模板_复用件" / "人物层库").is_dir()),
-        ("桥段账本", (target / "06_追踪_状态账本" / "桥段账本.md").exists()),
+        ("桥段记录", (target / "06_追踪_状态记录" / "桥段记录.md").exists()),
         ("素材底座", any((target / "02_设定_世界与角色" / "素材").glob("*.md"))),
         ("工具齐", len(list((target / "08_工具_脚本").glob("*.py"))) >= 8),
-        ("状态账本", (target / "06_追踪_状态账本" / "_tracking-state.json").exists()),
+        ("状态记录", (target / "06_追踪_状态记录" / "_tracking-state.json").exists()),
     ]
     return checks
 

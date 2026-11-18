@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-数字体检.py —— 每个"数＋单位"都要在账上（0 处待核）
+数字体检.py —— 每个"数＋单位"都要已登记（0 处待核）
 
 判据：查无漏的信条"数字对不上就是没写完"。正文里出现的每个数量，
-必须在 `06_追踪_状态账本/数字登记.md` 里有过登记；没登记的就是"待核"，
+必须在 `06_追踪_状态记录/数字登记.md` 里有过登记；没登记的就是"待核"，
 要么补登记，要么正文删掉这个数。
 
 口径（重要，不然会误报）：
   · 只抽"数字＋单位"（三株、七枚、两天、五百一十一文），不抽序数与成语
   · 数值比对，不比单位写法（枚/个 视为同一个数）
   · 登记表里的数字全部收进白名单（含乘法结果，如 3×7=21）
-  · **这是粗核**：它只能告诉你"这个数没在账上"，不能告诉你"这个数错了"。
+  · **这是粗核**：它只能告诉你"这个数没登记"，不能告诉你"这个数错了"。
     对不对仍要人核——脚本是下限。
 
 用法：
@@ -70,7 +70,7 @@ def load_ledger(project_root=None):
         roots.append(Path(project_root))
     roots.append(Path.cwd())
     for base in roots:
-        f = base / "06_追踪_状态账本" / "数字登记.md"
+        f = base / "06_追踪_状态记录" / "数字登记.md"
         if not f.exists():
             continue
         text = f.read_text(encoding="utf-8")
@@ -116,7 +116,7 @@ def check(path, known, strict_one=False):
             val = float(raw) if re.match(r"^[0-9.]+$", raw) else cn2num(raw)
             if val is None:
                 continue
-            # 「一株」「一枚」多半是泛指，不是账。除非要严核，否则放过。
+            # 「一株」「一枚」多半是泛指，不是数。除非要严核，否则放过。
             if val == 1 and not strict_one:
                 skipped_one += 1
                 continue
@@ -138,8 +138,8 @@ def check(path, known, strict_one=False):
 def selftest():
     import tempfile, os
     tmp = Path(tempfile.mkdtemp())
-    (tmp / "06_追踪_状态账本").mkdir(parents=True)
-    (tmp / "06_追踪_状态账本" / "数字登记.md").write_text(
+    (tmp / "06_追踪_状态记录").mkdir(parents=True)
+    (tmp / "06_追踪_状态记录" / "数字登记.md").write_text(
         "# 数字登记\n\n| 3 | 株 | 001 | 银叶草 |\n| 7 | 枚 | 001 | 铜板 |\n| 500 | 文 | 001 | 余钱 |\n",
         encoding="utf-8",
     )
@@ -148,7 +148,7 @@ def selftest():
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write(body)
     known, led = load_ledger(tmp)
-    print("自检：账上 3/7/500 应通过，十二文 应待核（1 处）")
+    print("自检：已登记 3/7/500 应通过，十二文 应待核（1 处）")
     n = check(p, known)
     shutil_rm(tmp)
     ok = n == 1
@@ -177,9 +177,9 @@ def main():
 
     known, ledger = load_ledger()
     if ledger is None:
-        print("[警告] 没找到 06_追踪_状态账本/数字登记.md —— 全部数量都会算待核")
+        print("[警告] 没找到 06_追踪_状态记录/数字登记.md —— 全部数量都会算待核")
     else:
-        print(f"账上已登记 {len(known)} 个数（{ledger}）")
+        print(f"登记里已有 {len(known)} 个数（{ledger}）")
 
     files = []
     for p in args.paths:

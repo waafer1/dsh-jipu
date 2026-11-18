@@ -130,8 +130,8 @@ def selftest():
     import tempfile, shutil
     root = Path(tempfile.mkdtemp())
     (root / "04_正文_成品").mkdir(parents=True)
-    (root / "06_追踪_状态账本").mkdir(parents=True)
-    (root / "06_追踪_状态账本" / "数字登记.md").write_text("| 3 | 株 |\n", encoding="utf-8")
+    (root / "06_追踪_状态记录").mkdir(parents=True)
+    (root / "06_追踪_状态记录" / "数字登记.md").write_text("| 3 | 株 |\n", encoding="utf-8")
     (root / "项目配置.json").write_text(json.dumps({"gate": {}, "lexicon": {"banned_words": []}}, ensure_ascii=False), encoding="utf-8")
     bad = "他很难过。\n他很失望。\n他在心里发誓，一定要赢。\n"
     (root / "04_正文_成品" / "第001章_发誓.md").write_text(bad, encoding="utf-8")

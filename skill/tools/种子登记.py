@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""种子台账.py —— 把用过的主题种子记进桥段账本，防重复。
+"""种子登记.py —— 把用过的主题种子记进桥段记录，防重复。
 
 用法：
-  python 种子台账.py --list --genre 01 [--role 主线]
-  python 种子台账.py --check "试丹"
-  python 种子台账.py --seed "他靠替人试丹活着" --chapter 012 [--role 主线]
-  python 种子台账.py --selftest
+  python 种子登记.py --list --genre 01 [--role 主线]
+  python 种子登记.py --check "试丹"
+  python 种子登记.py --seed "他靠替人试丹活着" --chapter 012 [--role 主线]
+  python 种子登记.py --selftest
 
 口径：
   - 项目根靠向上找 项目配置.json；也可 --project 指定。
-  - 记录写进 `06_追踪_状态账本/桥段账本.md` 的「种子使用记录」一节；没有就新建。
+  - 记录写进 `06_追踪_状态记录/桥段记录.md` 的「种子使用记录」一节；没有就新建。
   - 重复判定：规范化后前 12 字相同即视为同一条；也查 04_正文_成品 里是否已出现。
 退出码：0 正常；1 出错或被判重复；--selftest 失败 1。
 """
@@ -58,7 +58,7 @@ def write(p, s):
 
 
 def ledger_path(root):
-    return os.path.join(root, "06_追踪_状态账本", "桥段账本.md")
+    return os.path.join(root, "06_追踪_状态记录", "桥段记录.md")
 
 
 def in_ledger(root, seed):
@@ -122,7 +122,7 @@ def list_seeds(genre=None, role=None):
 def selftest():
     root = tempfile.mkdtemp(prefix="jipu-seed-")
     write(os.path.join(root, "项目配置.json"), '{"title":"t"}')
-    write(ledger_path(root), "# 桥段账本\n\n| 桥段 | 怎么用的 | 冷却到 | 备注 |\n|---|---|---|---|\n")
+    write(ledger_path(root), "# 桥段记录\n\n| 桥段 | 怎么用的 | 冷却到 | 备注 |\n|---|---|---|---|\n")
     seed = "他靠替人试丹活着"
     assert not in_ledger(root, seed)
     p = append(root, seed, "012", "主线")
@@ -140,7 +140,7 @@ def selftest():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="种子台账：记录用过的主题种子")
+    ap = argparse.ArgumentParser(description="种子登记：记录用过的主题种子")
     ap.add_argument("--project")
     ap.add_argument("--seed")
     ap.add_argument("--chapter", default="")
@@ -169,7 +169,7 @@ def main():
     if a.check:
         hit_ch = in_manuscript(root, a.check)
         if in_ledger(root, a.check):
-            print(f"[已用] 账本里有：{a.check}")
+            print(f"[已用] 登记里有：{a.check}")
             sys.exit(1)
         if hit_ch:
             print(f"[已用] 正文 {hit_ch} 已出现：{a.check}")

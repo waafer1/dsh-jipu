@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-账本体检.py —— 纪长存的上岗检查（state 结构对不对）
+状态体检.py —— 纪长存的上岗检查（state 结构对不对）
 
-查 `06_追踪_状态账本/_tracking-state.json`：
+查 `06_追踪_状态记录/_tracking-state.json`：
   S1 八个字段全在（少一个，后面的视图渲染就会缺）
   S2 state_revision / last_committed_chapter 是整数且一致推进
   S3 threads 每条有 id／status／due
@@ -15,8 +15,8 @@
 只判结构，不判内容对错。
 
 用法：
-    python 账本体检.py
-    python 账本体检.py --selftest
+    python 状态体检.py
+    python 状态体检.py --selftest
 退出码：有错 → 1。
 """
 
@@ -27,7 +27,7 @@ from pathlib import Path
 
 REQUIRED = ["state_revision", "last_committed_chapter", "committed_at", "commit_note",
             "threads", "foreshadows", "characters", "facts", "beats"]
-VIEWS = ["上下文.md", "事实词典.md", "伏笔.md", "数字登记.md", "桥段账本.md"]
+VIEWS = ["上下文.md", "事实词典.md", "伏笔.md", "数字登记.md", "桥段记录.md"]
 
 
 def find_state():
@@ -39,7 +39,7 @@ def find_state():
     cur = Path.cwd().resolve()
     bases += [cur] + list(cur.parents)
     for b in bases:
-        f = b / "06_追踪_状态账本" / "_tracking-state.json"
+        f = b / "06_追踪_状态记录" / "_tracking-state.json"
         if f.exists():
             return f
     return None
@@ -96,7 +96,7 @@ def check(state_path):
         if stale:
             warns.append(f"S8 视图比 state 旧（{len(stale)} 份）：{stale} → 重渲染")
 
-    print(f"\n=== 账本体检 · {state_path} ===")
+    print(f"\n=== 状态体检 · {state_path} ===")
     print(f"rev {rev} ／ 已提交到第 {last} 章 ／ 线 {len(st.get('threads', []))} 条 ／ 伏笔 {len(st.get('foreshadows', []))}")
     for e in errs:
         print(f"  [错] {e}")
@@ -104,14 +104,14 @@ def check(state_path):
         print(f"  [警] {w}")
     if not errs and not warns:
         print("  结构完整。")
-    print("\n账本体检：" + ("PASS" if not errs else f"FAIL（{len(errs)} 项）"))
+    print("\n状态体检：" + ("PASS" if not errs else f"FAIL（{len(errs)} 项）"))
     return 0 if not errs else 1
 
 
 def selftest():
     import tempfile, shutil, time
     tmp = Path(tempfile.mkdtemp())
-    d = tmp / "06_追踪_状态账本"
+    d = tmp / "06_追踪_状态记录"
     d.mkdir(parents=True)
     st = {"state_revision": 4, "last_committed_chapter": 3, "committed_at": "2026-11-04",
           "commit_note": "003 提交", "threads": [{"id": "T1", "name": "草", "status": "open", "due": 5}],
@@ -147,7 +147,7 @@ def main():
         sys.exit(selftest())
     p = find_state()
     if p is None:
-        print("[停] 找不到 06_追踪_状态账本/_tracking-state.json —— 先确认项目根")
+        print("[停] 找不到 06_追踪_状态记录/_tracking-state.json —— 先确认项目根")
         sys.exit(1)
     sys.exit(check(p))
 

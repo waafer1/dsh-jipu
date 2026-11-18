@@ -11,10 +11,10 @@
   3 卷纲
   4 章纲（至少前 15 章）
   5 人物层库
-  6 桥段账本（有过回写）
+  6 桥段记录（有过回写）
   7 素材底座（≥3 条）
   8 工具齐（14 个脚本）
-  9 状态账本（结构完整）
+  9 状态记录（结构完整）
 
 用法：
     python 能力自测.py
@@ -29,8 +29,8 @@ from pathlib import Path
 
 TOOLS = ["开项目.py", "选型体检.py", "召回.py", "句检.py", "句病检.py", "对白归属.py",
          "章指标.py", "画面检.py", "数字体检.py", "章体检.py", "章检.py", "读者判定.py",
-         "账本体检.py", "能力自测.py"]
-HARD_FIELDS = ("一句话", "干的活", "想要", "怕", "账")
+         "状态体检.py", "能力自测.py"]
+HARD_FIELDS = ("一句话", "干的活", "想要", "怕", "牵扯")
 
 
 def find_root() -> Path:
@@ -87,12 +87,12 @@ def check(root: Path):
     d7 = root / "07_模板_复用件"
     rows.append(("5 人物层库", (d7 / "人物层库").is_dir(), "在" if (d7 / "人物层库").is_dir() else "缺"))
 
-    ledger = root / "06_追踪_状态账本" / "桥段账本.md"
+    ledger = root / "06_追踪_状态记录" / "桥段记录.md"
     used = False
     if ledger.exists():
         used = len([l for l in ledger.read_text(encoding="utf-8").split("\n")
                     if l.strip().startswith("|") and not l.strip().startswith("|---")]) > 2
-    rows.append(("6 桥段账本有回写", used, "有记录" if used else "空表"))
+    rows.append(("6 桥段记录有回写", used, "有记录" if used else "空表"))
 
     mat = root / "02_设定_世界与角色" / "素材"
     n_mat = len(list(mat.glob("*.md"))) if mat.is_dir() else 0
@@ -102,7 +102,7 @@ def check(root: Path):
     have = [t for t in TOOLS if (tool_dir / t).exists()]
     rows.append(("8 工具齐 14 个", len(have) == len(TOOLS), f"{len(have)}/{len(TOOLS)}"))
 
-    st = root / "06_追踪_状态账本" / "_tracking-state.json"
+    st = root / "06_追踪_状态记录" / "_tracking-state.json"
     ok_st = False
     if st.exists():
         try:
@@ -110,7 +110,7 @@ def check(root: Path):
             ok_st = all(k in d for k in ("state_revision", "threads", "foreshadows", "beats"))
         except Exception:
             ok_st = False
-    rows.append(("9 状态账本结构", ok_st, "正常" if ok_st else "缺字段或读不了"))
+    rows.append(("9 状态记录结构", ok_st, "正常" if ok_st else "缺字段或读不了"))
 
     print(f"\n=== 能力自测 · {root} ===")
     done = 0
@@ -131,7 +131,7 @@ def selftest():
     (tmp / "02_设定_世界与角色" / "角色").mkdir(parents=True)
     (tmp / "02_设定_世界与角色" / "素材").mkdir(parents=True)
     (tmp / "03_图纸_大纲与细纲").mkdir(parents=True)
-    (tmp / "06_追踪_状态账本").mkdir(parents=True)
+    (tmp / "06_追踪_状态记录").mkdir(parents=True)
     (tmp / "07_模板_复用件" / "人物层库").mkdir(parents=True)
     (tmp / "08_工具_脚本").mkdir(parents=True)
     print("自检：空项目应只过 1—2 项（人物层库／工具可能不齐）")

@@ -96,6 +96,12 @@ def main_check(chapter, chapter_file, audit_file, root):
     for name, ok, note in rows:
         print(f"  {'PASS' if ok else 'FAIL'}  {name:<24} {note}")
         fails += (not ok)
+    # 提示项（不进判定）：岗位自测·审计岗——报告只有结论没有读数
+    if audit_file is not None and audit_file.exists():
+        text = audit_file.read_text(encoding="utf-8")
+        has_reading = bool(re.search(r"\d+\s*字", text) and re.search(r"\d+\s*段", text))
+        if not has_reading:
+            print("  CHECK  审计读数缺失             报告里没写「NNNN 字／MM 段」——只有结论不算审计")
     print("\n章检：三项全 PASS，这章算写完" if fails == 0 else f"章检：FAIL（{fails} 项）—— 不许开下一章")
     return 0 if fails == 0 else 1
 
@@ -110,8 +116,8 @@ def selftest():
     root = Path(tempfile.mkdtemp())
     (root / "04_正文_成品").mkdir(parents=True)
     (root / "05_质检_审计评审节奏" / "审计").mkdir(parents=True)
-    (root / "06_追踪_状态账本").mkdir(parents=True)
-    (root / "06_追踪_状态账本" / "数字登记.md").write_text("| 3 | 株 |\n", encoding="utf-8")
+    (root / "06_追踪_状态记录").mkdir(parents=True)
+    (root / "06_追踪_状态记录" / "数字登记.md").write_text("| 3 | 株 |\n", encoding="utf-8")
     (root / "项目配置.json").write_text(json.dumps({"gate": {}, "lexicon": {"banned_words": []}}, ensure_ascii=False), encoding="utf-8")
     body = "他把三株草塞进怀里。草被风吹得响。\n“走吧。”老板说。\n"
     (root / "04_正文_成品" / "第001章_塞草.md").write_text(body, encoding="utf-8")

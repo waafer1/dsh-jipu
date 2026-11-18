@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-召回.py —— 写下一章之前，把旧账打成一份注射包
+召回.py —— 写下一章之前，把旧线打成一份注射包
 
 为什么要它：长篇写到三十章以后，人记不住"他现在有多少钱、欠谁的、哪条线到期了"。
 这份包把这些从 `_tracking-state.json` 里读出来，和上一章末尾原文拼在一起，
 作家只读这一份就能动笔。
 
-产出 `06_追踪_状态账本/召回_第NNN章.md`（`--write` 时落盘）：
+产出 `06_追踪_状态记录/召回_第NNN章.md`（`--write` 时落盘）：
   1 主角此刻（钱／身份／代价／位置）
   2 开口的线（按 due 排序，标"到期"）
   3 未付的伏笔（A 类＝来源未解释／B 类＝方法未兑现）
@@ -32,17 +32,17 @@ def find_project_root() -> Path:
     """四级判定：当前目录→向上找 _tracking-state.json；JIPU_ROOT；停下报错。"""
     import os
     env = os.environ.get("JIPU_ROOT")
-    if env and (Path(env) / "06_追踪_状态账本" / "_tracking-state.json").exists():
+    if env and (Path(env) / "06_追踪_状态记录" / "_tracking-state.json").exists():
         return Path(env)
     cur = Path.cwd().resolve()
     for base in [cur] + list(cur.parents):
-        if (base / "06_追踪_状态账本" / "_tracking-state.json").exists():
+        if (base / "06_追踪_状态记录" / "_tracking-state.json").exists():
             return base
     return cur
 
 
 def load_state(root: Path):
-    f = root / "06_追踪_状态账本" / "_tracking-state.json"
+    f = root / "06_追踪_状态记录" / "_tracking-state.json"
     if not f.exists():
         print(f"[停] 找不到 {f}\n    先确认项目根（或设 JIPU_ROOT），计谱不猜路径。")
         sys.exit(1)
@@ -74,7 +74,7 @@ def last_chars(root: Path, n: int, upto: int):
 def build(root: Path, chap: int, n_chars: int) -> str:
     st = load_state(root)
     L = [f"# 召回 · 第 {chap} 章\n",
-         f"> 事实源：`06_追踪_状态账本/_tracking-state.json`（rev {st.get('state_revision', 0)}，"
+         f"> 事实源：`06_追踪_状态记录/_tracking-state.json`（rev {st.get('state_revision', 0)}，"
          f"已提交到第 {st.get('last_committed_chapter', 0)} 章）\n"]
 
     L.append("## 一、主角此刻\n")
@@ -87,7 +87,7 @@ def build(root: Path, chap: int, n_chars: int) -> str:
         L.append(f"- 关系：{c.get('relation', '未记录')}")
         L.append(f"- 备注：{c.get('note', '—')}\n")
     else:
-        L.append("- 账上还没有主角记录——第一次提交时补\n")
+        L.append("- 登记里还没有主角记录——第一次提交时补\n")
 
     L.append("## 二、开口的线\n")
     threads = [t for t in st.get("threads", []) if t.get("status", "open") == "open"]
@@ -136,7 +136,7 @@ def build(root: Path, chap: int, n_chars: int) -> str:
 def selftest():
     import tempfile
     root = Path(tempfile.mkdtemp())
-    (root / "06_追踪_状态账本").mkdir(parents=True)
+    (root / "06_追踪_状态记录").mkdir(parents=True)
     (root / "04_正文_成品").mkdir(parents=True)
     state = {
         "state_revision": 4, "last_committed_chapter": 2,
@@ -147,7 +147,7 @@ def selftest():
         "beats": [{"chapter": 2, "beats": ["送药", "被关门", "守夜"]}],
         "facts": {"prices_used": ["一副药 7 枚铜板"]},
     }
-    (root / "06_追踪_状态账本" / "_tracking-state.json").write_text(
+    (root / "06_追踪_状态记录" / "_tracking-state.json").write_text(
         json.dumps(state, ensure_ascii=False), encoding="utf-8")
     (root / "04_正文_成品" / "第002章_松手.md").write_text("他坐着，等下一口气。", encoding="utf-8")
     out = build(root, 3, 800)
@@ -159,7 +159,7 @@ def selftest():
 
 
 def main():
-    ap = argparse.ArgumentParser(description="旧账注射包")
+    ap = argparse.ArgumentParser(description="旧线注射包")
     ap.add_argument("chapter", nargs="?", type=int)
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--chars", type=int, default=800)
@@ -175,7 +175,7 @@ def main():
     root = find_project_root()
     text = build(root, args.chapter, args.chars)
     if args.write:
-        out = root / "06_追踪_状态账本" / f"召回_第{args.chapter:03d}章.md"
+        out = root / "06_追踪_状态记录" / f"召回_第{args.chapter:03d}章.md"
         out.write_text(text, encoding="utf-8")
         print(f"已写：{out}")
     else:

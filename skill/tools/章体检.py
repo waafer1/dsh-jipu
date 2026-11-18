@@ -169,8 +169,8 @@ def selftest():
     import tempfile
     root = Path(tempfile.mkdtemp())
     (root / "04_正文_成品").mkdir(parents=True)
-    (root / "06_追踪_状态账本").mkdir(parents=True)
-    (root / "06_追踪_状态账本" / "数字登记.md").write_text("| 3 | 株 |\n| 7 | 枚 |\n", encoding="utf-8")
+    (root / "06_追踪_状态记录").mkdir(parents=True)
+    (root / "06_追踪_状态记录" / "数字登记.md").write_text("| 3 | 株 |\n| 7 | 枚 |\n", encoding="utf-8")
     (root / "项目配置.json").write_text(json.dumps(
         {"gate": {"min_words": 50}, "lexicon": {"banned_words": ["系统"]}}, ensure_ascii=False), encoding="utf-8")
     good = ("柜台上摆着三株草，土还湿着。\n"

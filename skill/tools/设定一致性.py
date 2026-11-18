@@ -118,7 +118,7 @@ def check(root, files, names=False):
     if names:
         corpus = body + read(card_path)
         for f in ('事实词典.md', '数字登记.md'):
-            corpus += read(os.path.join(root, '06_追踪_状态账本', f))
+            corpus += read(os.path.join(root, '06_追踪_状态记录', f))
         cnt = collections.Counter(re.findall(r'[\u4e00-\u9fa5]{2,4}', body))
         sus = []
         for w, n in cnt.most_common(300):

@@ -10,7 +10,7 @@
 
 口径：
   - 归一化：去空白与标点、统一小写，再比连续 N 字（默认 20）。
-  - 来源默认 `06_追踪_状态账本/来源文本/`；没有就只报“未配置来源”。
+  - 来源默认 `06_追踪_状态记录/来源文本/`；没有就只报“未配置来源”。
   - 只比“结构来源文本”，不比计谱 assets 里的摘要（摘要本就不是原文）。
   - 命中即 exit 1；命中片段打印归一化后的 20 字，便于回改。
 """
@@ -51,7 +51,7 @@ def read(p):
 def gather_sources(specs, root):
     files = []
     if not specs:
-        d = os.path.join(root or '.', '06_追踪_状态账本', '来源文本')
+        d = os.path.join(root or '.', '06_追踪_状态记录', '来源文本')
         if os.path.isdir(d):
             specs = [d]
     for s in specs:
@@ -89,7 +89,7 @@ def scan(file_path, idx, n):
 def check(specs, file_paths, n, root):
     files = gather_sources(specs, root)
     if not files:
-        print('[停] 没有来源文本。把来源放到 `06_追踪_状态账本/来源文本/`，或用 --source 指定。')
+        print('[停] 没有来源文本。把来源放到 `06_追踪_状态记录/来源文本/`，或用 --source 指定。')
         return 1
     print(f'来源 {len(files)} 个，阈值 {n} 字')
     idx = build_index(files, n)
