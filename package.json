@@ -1,6 +1,6 @@
 {
   "name": "dsh-jipu",
-  "version": "1.33.0",
+  "version": "1.33.1",
   "type": "module",
   "description": "Jipu manuscript crew for DSH: reader-first long-form novel pipeline, 24 gate scripts, 14 genre libraries.",
   "scripts": {

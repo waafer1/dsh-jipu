@@ -3,7 +3,7 @@
  *
  * 一个 `jipu` 工具：
  *   - skill    读 skill/ 下的手册与 references（分段读）
- *   - scripts  列出 15 个门禁脚本
+ *   - scripts  列出门禁脚本
  *   - roles    列出七个角色设定；给 role 则返回该角色全文（可当 subagent prompt）
  *   - run      在项目根目录跑指定脚本（project 可省略，自动向上找 项目配置.json）
  *   - selftest 跑脚本自检
@@ -136,7 +136,9 @@ async function projectStatus(args) {
     return { text: '找不到项目根：请在参数里给 project，或把 项目配置.json 放在当前目录/上层。' };
   }
   const cfg = readJsonSafe(path.join(project, '项目配置.json'));
-  const state = readJsonSafe(path.join(project, '06_追踪_状态账本', '_tracking-state.json'));
+  // 1.33.0 起状态目录叫 06_追踪_状态记录；旧项目仍可能是 06_追踪_状态账本，两个都认。
+  const state = readJsonSafe(path.join(project, '06_追踪_状态记录', '_tracking-state.json'))
+    || readJsonSafe(path.join(project, '06_追踪_状态账本', '_tracking-state.json'));
   const lines = [];
   lines.push(`项目：${cfg ? (cfg.title || '(未命名)') : '（缺 项目配置.json）'}`);
   lines.push(`路径：${project}`);
@@ -187,9 +189,9 @@ export function apply(ctx) {
   ctx.tools.register({
     name: 'jipu',
     description:
-      '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑 15 个门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/召回/账本体检/种子台账/开项目/选型体检/能力自测）。' +
+      '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/召回/状态体检/种子登记/开项目/选型体检/能力自测；action=scripts 看全部）。' +
       'action=skill 读 SKILL.md 或 references（offset/limit 分段）；action=scripts 列脚本；action=roles 列七个角色，给 role 返回设定全文（可作 subagent prompt）；' +
-      'action=status 报当前阶段与下一章；action=seeds 按类目/主线列种子、查重或记账；action=run 在项目根跑脚本（project 可省略，自动向上找 项目配置.json）；action=selftest 跑脚本自检。' +
+      'action=status 报当前阶段与下一章；action=seeds 按类目/主线列种子、查重或登记；action=run 在项目根跑脚本（project 可省略，自动向上找 项目配置.json）；action=selftest 跑脚本自检。' +
       '判稿以项目内 08_工具_脚本/ 的脚本为准，本包脚本只用于自检与开新书复制。',
     parameters: {
       type: 'object',
@@ -205,10 +207,10 @@ export function apply(ctx) {
         args: { type: 'array', items: { type: 'string' }, description: '传给脚本的参数。' },
         project: { type: 'string', description: '项目根目录；省略时自动向上找 项目配置.json，再退到当前目录。' },
         genre: { type: 'string', description: 'action=seeds 时的类目编号，01—12。' },
-        role: { type: 'string', enum: ['主线', '副线', '两用'], description: 'action=seeds 时按用途筛。' },
-        seed: { type: 'string', description: 'action=seeds 时的种子钩子；给了就查重，配合 use=true 则记账。' },
-        chapter: { type: 'string', description: 'action=seeds 记账时的章号，如 012。' },
-        use: { type: 'boolean', description: 'action=seeds 且给了 seed 时，true 表示记进桥段账本。' },
+        purpose: { type: 'string', enum: ['主线', '副线', '两用'], description: 'action=seeds 时按用途筛。' },
+        seed: { type: 'string', description: 'action=seeds 时的种子钩子；给了就查重，配合 use=true 则登记。' },
+        chapter: { type: 'string', description: 'action=seeds 登记时的章号，如 012。' },
+        use: { type: 'boolean', description: 'action=seeds 且给了 seed 时，true 表示记进桥段记录。' },
       },
     },
     output: {
@@ -233,7 +235,7 @@ export function apply(ctx) {
       if (action === 'seeds') {
         const cli = [];
         if (args.genre) cli.push('--genre', String(args.genre));
-        if (args.role) cli.push('--role', String(args.role));
+        if (args.purpose) cli.push('--role', String(args.purpose));
         if (args.seed && args.use) {
           cli.push('--seed', String(args.seed), '--chapter', String(args.chapter || '-'));
         } else if (args.seed) {
@@ -242,7 +244,7 @@ export function apply(ctx) {
           cli.push('--list');
         }
         const project = args.project || process.env.JIPU_ROOT || (await climbForProject(process.cwd())) || process.cwd();
-        const r = await runPython('种子台账.py', cli, project);
+        const r = await runPython('种子登记.py', cli, project);
         return { ...r, text: `[seeds] ${cli.join(' ')}\nexit=${r.exit}\n\n${r.stdout}${r.stderr}` };
       }
 
