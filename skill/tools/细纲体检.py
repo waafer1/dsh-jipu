@@ -7,13 +7,14 @@
   python 细纲体检.py --file 细纲_第012章.md
   python 细纲体检.py --selftest
 
-口径（头部九行，缺一 FAIL）：
-  档 / 图 / 话 / 轴 / 出场人物 / 地点 / 事件 / 追卡 / 改势 / 桥段
+口径（头部十一行，缺一 FAIL）：
+  档 / 图 / 话 / 轴 / 出场人物 / 地点 / 事件 / 追卡 / 改势 / 桥段 / 章末未决
   - 出场人物：本章有名有姓者，至少 1 个
   - 地点：一个具体场所，不许写“某地”
   - 事件：谁要什么 → 他做了什么 → 结果
   - 追卡：这件事追到哪张人物卡的哪一条（主角卡·他想要……）
   - 桥段：本章用哪 2 个 Q 号（最多 2 个；查 11-主题预设）
+  - 章末未决：这一章结束时读者等什么（一句话，≤40 字；写"无／待定"＝没钩子 → FAIL）
   - 改势：本章改了 欠／怕／信 哪一条；一条没改 → FAIL
 
 玩法（读 项目配置.json 的 playloop，缺省为结算型）：
@@ -31,7 +32,7 @@ import re
 import sys
 import tempfile
 
-FIELDS = ['档', '图', '话', '轴', '出场人物', '地点', '事件', '追卡', '改势', '桥段']
+FIELDS = ['档', '图', '话', '轴', '出场人物', '地点', '事件', '追卡', '改势', '桥段', '章末未决']
 
 DEFAULT_PLAYLOOP = {
     'main': '结算型',
@@ -137,6 +138,13 @@ def check_file(path, pl=None):
         qs = set(re.findall(r'Q-\d+', got['桥段']))
         if len(qs) > 2:
             problems.append(f"桥段超过 2 个（{len(qs)} 个）")
+    # 章末未决：读者这一章结束时等什么。空／「无」＝这章没有钩子
+    hook = got.get('章末未决', '')
+    if hook:
+        if hook.strip() in ('无', '暂无', '待定', '没有', '—', '-', '略'):
+            problems.append('章末未决写成"无"——这章结束读者没有等的')
+        elif len(hook) > 40:
+            problems.append(f'章末未决过长（{len(hook)} 字 > 40），要一句话')
     beats = int(pl.get('beats') or 0)
     got_beats = count_beats(text)
     if beats and got_beats and got_beats < beats:
@@ -173,6 +181,7 @@ def selftest():
 追卡：主角卡·他想要（地契）；对手卡·牵扯（欠三条命）
 改势：欠——他又欠了掌柜半担炭
 桥段：Q-101＋Q-107
+章末未决：半担湿炭撑不到明早，他拿什么交？
 '''
     body4 = '\n## 拍点四条\n\n1. 起\n2. 承\n3. 转\n4. 合\n'
     io.open(p, 'w', encoding='utf-8').write(head + body4)
@@ -188,11 +197,16 @@ def selftest():
         (head + body4).replace('事件：陈九想赊一担炭，掌柜只给半担，他问出一条“湿炭折半”的规矩',
                                '事件：陈九意识到自己该走了，心里开始明白这里的规矩'))
     rc_state = check_file(p, pl)
+    io.open(p, 'w', encoding='utf-8').write(
+        (head + body4).replace('章末未决：半担湿炭撑不到明早，他拿什么交？', '章末未决：无'))
+    rc_hook = check_file(p, pl)
     import shutil
     shutil.rmtree(d, ignore_errors=True)
-    ok = rc_ok == 0 and rc_few == 1 and rc_type == 1 and rc_missing == 1 and rc_state == 1
+    ok = (rc_ok == 0 and rc_few == 1 and rc_type == 1 and rc_missing == 1
+          and rc_state == 1 and rc_hook == 1)
     print(f'\n自检：{"通过" if ok else "失败"}'
-          f'（齐 {rc_ok}／拍少 {rc_few}／型不对 {rc_type}／缺地点 {rc_missing}／事件写成状态 {rc_state}）')
+          f'（齐 {rc_ok}／拍少 {rc_few}／型不对 {rc_type}／缺地点 {rc_missing}'
+          f'／事件写成状态 {rc_state}／章末未决写无 {rc_hook}）')
     return 0 if ok else 1
 
 
