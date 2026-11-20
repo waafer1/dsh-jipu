@@ -1,8 +1,11 @@
 {
   "name": "dsh-jipu",
-  "version": "1.32.0",
+  "version": "1.33.0",
   "type": "module",
-  "description": "Jipu manuscript crew for DSH: reader-first long-form novel pipeline, 14 gate scripts, 12 genre libraries.",
+  "description": "Jipu manuscript crew for DSH: reader-first long-form novel pipeline, 24 gate scripts, 14 genre libraries.",
+  "scripts": {
+    "prepack": "node scripts/clean-pycache.mjs"
+  },
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",

@@ -9,11 +9,11 @@ A single `jipu` tool with four actions:
 | action | does |
 |---|---|
 | `skill` | read the manuscript manual (`SKILL.md`) and its 12 references, paginated with `offset` / `limit` |
-| `scripts` | list the 14 gate scripts |
+| `scripts` | list the gate scripts |
 | `run` | run a gate script inside a project root (requires `project`) |
 | `selftest` | run a script's built-in `--selftest` |
 
-The 14 scripts cover: project scaffold, option-card check, capability self-test, recall pack, sentence check, object inventory, dialogue attribution, image/filter check, chapter metrics, number ledger, chapter physical, chapter gate, reader verdict, ledger check.
+The scripts cover: project scaffold, option-card check, capability self-test, recall pack, sentence check, object inventory, dialogue attribution, image/filter check, chapter metrics, number ledger, chapter physical, chapter gate, reader verdict, ledger check.
 
 The skill ships the full manuscript workflow: outline-first chapter construction, eight-beat outline, three hard gates, T0/T1/T2 delivery tiers, three revision loops, plus 12 genre template libraries, 81 beat templates and a trope library.
 
