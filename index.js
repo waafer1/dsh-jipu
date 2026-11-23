@@ -189,7 +189,7 @@ export function apply(ctx) {
   ctx.tools.register({
     name: 'jipu',
     description:
-      '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/细纲体检/细纲对账/卷纲体检/投影对账/召回/状态体检/种子登记/开项目/选型体检/能力自测；action=scripts 看全部）。' +
+      '计谱（Jipu）长篇写作工序：读手册、看七个角色、查项目阶段、跑门禁脚本（句检/句病检/对白归属/画面检/章指标/数字体检/章体检/章检/读者判定/细纲体检/细纲对账/卷纲体检/结构指纹/词汇疲劳/投影对账/召回/状态体检/种子登记/开项目/选型体检/能力自测；action=scripts 看全部）。' +
       'action=skill 读 SKILL.md 或 references（offset/limit 分段）；action=scripts 列脚本；action=roles 列七个角色，给 role 返回设定全文（可作 subagent prompt）；' +
       'action=status 报当前阶段与下一章；action=seeds 按类目/主线列种子、查重或登记；action=run 在项目根跑脚本（project 可省略，自动向上找 项目配置.json）；action=selftest 跑脚本自检。' +
       '判稿以项目内 08_工具_脚本/ 的脚本为准，本包脚本只用于自检与开新书复制。',
