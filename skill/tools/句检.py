@@ -144,6 +144,7 @@ def count_object(path):
     print(f"「把」字句 {n_ba} 条 ／「被」字句 {n_bei} 条 ／ 合计 {n_ba + n_bei} 条")
     print("逐条人工核：宾语在不在、指代找不找得到。脚本只给条数。")
     print(f"宾语盘点：{n_ba + n_bei} 条")
+    print("（这里只数「把」「被」两类；合门与审计要用的条数以 句病检.py 为准——它多「对向给」「是…的」两类）")
     return n_ba + n_bei
 
 

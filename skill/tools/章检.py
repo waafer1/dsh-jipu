@@ -19,6 +19,8 @@
 
 import argparse
 import glob
+import json
+import os
 import re
 import subprocess
 import sys
@@ -62,34 +64,44 @@ def locate_audit(root: Path, chapter: str, given=None):
 
 
 def run(script, args, cwd):
-    r = subprocess.run([sys.executable, str(HERE / script)] + args,
-                       capture_output=True, text=True, encoding="utf-8",
-                       timeout=120, cwd=str(cwd))
-    return r.returncode, (r.stdout or "") + (r.stderr or "")
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+    try:
+        r = subprocess.run([sys.executable, str(HERE / script)] + args,
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", env=env,
+                           timeout=120, cwd=str(cwd))
+        return r.returncode, (r.stdout or "") + (r.stderr or "")
+    except Exception as e:
+        return 99, f"[脚本失败] {script}: {e}"
 
 
-def main_check(chapter, chapter_file, audit_file, root):
+def main_check(chapter, chapter_file, audit_file, root, tier="T1"):
     rows = []
 
     rc, out = run("句检.py", [str(chapter_file)], root)
     rows.append(("① 句检 blocking=0", rc == 0, _g(out, r"合计 blocking (\d+)") + " 条"))
 
-    rc2, out2 = run("句检.py", ["--count-object", str(chapter_file)], root)
+    # 宾语盘点以 句病检.py 为准：它数四类（把／被／对向给／是…的），
+    # 句检.py --count-object 只数把与被（1.37.0 前这里拿错源，审计按 句病检 写就永远对不上）
+    rc2, out2 = run("句病检.py", [str(chapter_file)], root)
     actual = _g(out2, r"宾语盘点：(\d+) 条")
+    if actual == "?":
+        rc2, out2 = run("句检.py", ["--count-object", str(chapter_file)], root)
+        actual = _g(out2, r"宾语盘点：(\d+) 条")
 
     if audit_file is None or not audit_file.exists():
         rows.append(("② 审计有「宾语盘点：N 条」", False, "审计文件找不到"))
-        rows.append(("③ 条数与句检相等", False, "无从比对"))
+        rows.append(("③ 条数与句病检相等", False, "无从比对"))
     else:
         text = audit_file.read_text(encoding="utf-8")
         m = re.search(r"宾语盘点\*{0,2}\s*[：:]\s*(\d+)\s*条", text)
         if not m:
             rows.append(("② 审计有「宾语盘点：N 条」", False, f"{audit_file.name} 缺这一行"))
-            rows.append(("③ 条数与句检相等", False, "无从比对"))
+            rows.append(("③ 条数与句病检相等", False, "无从比对"))
         else:
             declared = m.group(1)
             rows.append(("② 审计有「宾语盘点：N 条」", True, f"{declared} 条（{audit_file.name}）"))
-            rows.append(("③ 条数与句检相等", declared == actual, f"审计 {declared} ／句检 {actual}"))
+            rows.append(("③ 条数与句病检相等", declared == actual, f"审计 {declared} ／句检 {actual}"))
 
     print(f"\n=== 章检 · 第 {chapter} 章 ===")
     fails = 0
@@ -102,6 +114,9 @@ def main_check(chapter, chapter_file, audit_file, root):
         has_reading = bool(re.search(r"\d+\s*字", text) and re.search(r"\d+\s*段", text))
         if not has_reading:
             print("  CHECK  审计读数缺失             报告里没写「NNNN 字／MM 段」——只有结论不算审计")
+    # 提示项（不进判定）：1.36.0——合门前有没有成对盲评记录
+    if tier != "T0":
+        _check_blind_review(root, chapter)
     print("\n章检：三项全 PASS，这章算写完" if fails == 0 else f"章检：FAIL（{fails} 项）—— 不许开下一章")
     return 0 if fails == 0 else 1
 
@@ -109,6 +124,42 @@ def main_check(chapter, chapter_file, audit_file, root):
 def _g(text, pattern):
     m = re.search(pattern, text)
     return m.group(1) if m else "?"
+
+
+def _check_blind_review(root: Path, chapter: str):
+    """合门前的提示项：这一章有没有成对盲评的偏好对记录。
+
+    只提示，不进判定、不改退出码。理由：双候选是 1.36.0 的默认要求，但老项目
+    （`writing.blind_review` 没开、或本来就没有候选稿）不该被它卡住合门。
+    """
+    cfg_file = root / "项目配置.json"
+    blind = True
+    try:
+        cfg = json.loads(cfg_file.read_text(encoding="utf-8")) if cfg_file.exists() else {}
+        blind = bool(cfg.get("writing", {}).get("blind_review", True))
+    except Exception:
+        blind = True
+    if not blind:
+        return
+    pf = root / "06_追踪_状态记录" / "偏好对.jsonl"
+    has = False
+    if pf.exists():
+        for line in pf.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except Exception:
+                continue
+            try:
+                if int(rec.get("章")) == int(chapter):
+                    has = True
+                    break
+            except (TypeError, ValueError):
+                continue
+    if not has:
+        print("  CHECK  缺成对盲评记录            `成对盲评.py` 没跑过这一章——评审只盖章没比较（不进硬项）")
 
 
 def selftest():
@@ -148,6 +199,8 @@ def main():
     ap.add_argument("chapter", nargs="?")
     ap.add_argument("--audit")
     ap.add_argument("--file")
+    ap.add_argument("--tier", default="T1", choices=["T0", "T1", "T2"],
+                    help="档位：T0 过渡章不做盲评要求")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
@@ -163,7 +216,7 @@ def main():
         print(f"[停] 找不到第 {args.chapter} 章正文")
         sys.exit(1)
     af = locate_audit(root, args.chapter, args.audit)
-    sys.exit(main_check(args.chapter, cf, af, root))
+    sys.exit(main_check(args.chapter, cf, af, root, getattr(args, "tier", "T1")))
 
 
 if __name__ == "__main__":

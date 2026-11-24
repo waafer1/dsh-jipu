@@ -26,6 +26,7 @@
 import argparse
 import glob
 import json
+import os
 import re
 import subprocess
 import sys
@@ -70,9 +71,12 @@ def locate(chapter: str, given: str = None, root: Path = None):
 
 
 def run(script, args, cwd=None):
+    # 子脚本必须按 UTF-8 打印：本机默认 cp936，父脚本按 utf-8 读，一个中文字就崩
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
     try:
         r = subprocess.run([sys.executable, str(HERE / script)] + args,
                            capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", env=env,
                            timeout=120, cwd=str(cwd) if cwd else None)
         return r.returncode, (r.stdout or "") + (r.stderr or "")
     except Exception as e:
@@ -87,7 +91,7 @@ def strip_fm(t):
     return t
 
 
-def main_check(chapter, path, root):
+def main_check(chapter, path, root, tier="T1"):
     cfg = load_cfg(root)
     gate = cfg.get("gate", {})
     text = strip_fm(path.read_text(encoding="utf-8"))
@@ -150,6 +154,59 @@ def main_check(chapter, path, root):
     for name_, ok, note in rows:
         print(f"  {'PASS' if ok else 'FAIL'}  {name_:<26} {note}")
         fails += (not ok)
+
+    # ---- CHECK 区（只报数，不进合门）：1.36.0 加 ----
+    # 为什么不进合门：这些是"像不像这本书"的密度读数，阈值是软的；真拦人会把章节卡死，
+    # 而卡死的第 3 章之后，人就开始绕过门禁——研究报告 §2.1 讲的正是这件事。
+    checks = []
+    rc_w, out_w = run("文风靶.py", [str(path), "--tier", tier], cwd=root)
+    for line in out_w.splitlines():
+        s = line.strip()
+        if s.startswith("CHECK"):
+            checks.append(s[5:].strip())
+    # 1.37.0：把两个"铺了没人读"的账本接进来（研究报告 §F7）
+    chap_num = re.sub(r"\D", "", str(chapter)) or ""
+    if chap_num:
+        for script, label in (("张力体检.py", "张力"), ("骨架体检.py", "骨架")):
+            if not (HERE / script).exists():
+                checks.append(f"{label}体检 脚本缺失（{script}）——手册点名的脚本必须真实存在")
+                continue
+            rc_t, out_t = run(script, [chap_num], cwd=root)
+            for line in out_t.splitlines():
+                t = line.strip()
+                if not t.startswith("CHECK"):
+                    continue
+                body = t[5:].strip()
+                # 跳过小标题本身（"CHECK（不进合门，命中即改）：" 之类），只收具体读数
+                if not body or body.startswith("（") or body.endswith("："):
+                    continue
+                checks.append(f"{label}：{body}")
+
+    writing = cfg.get("writing") or {}
+    # 1.37.0：T0 过渡章单稿即可（不要求成对盲评）；T1/T2 必须有三次判读记录
+    if writing.get("blind_review") and tier != "T0":
+        pf = root / "06_追踪_状态记录" / "偏好对.jsonl"
+        picked = False
+        if pf.exists():
+            for line in pf.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    if int(json.loads(line).get("章", -1)) == int(re.sub(r"\D", "", str(chapter)) or 0):
+                        picked = True
+                except Exception:
+                    continue
+        if not picked:
+            checks.append("缺成对盲评记录（这份是单稿；`成对盲评.py` 没跑过 → 评审只能盖章）")
+
+    if checks:
+        print("\nCHECK（不进合门，命中即改）：")
+        for c in checks:
+            print(f"  CHECK  {c}")
+    if rc_w != 0 and not out_w.strip():
+        print("  CHECK  文风靶跑不起来（脚本缺或报错）—— 手册点名的脚本必须真实存在")
+
     print(f"\n硬项 {len(rows) - fails}/{len(rows)} 通过")
     print("章体检：PASS" if fails == 0 else f"章体检：FAIL（{fails} 项）—— 按回路重来，别在正文里圆")
 
@@ -196,6 +253,8 @@ def main():
     ap = argparse.ArgumentParser(description="章体检九硬项")
     ap.add_argument("chapter", nargs="?")
     ap.add_argument("--file")
+    ap.add_argument("--tier", default="T1", choices=["T0", "T1", "T2"],
+                    help="档位：T0 过渡章（单稿，不要求盲评）／T1 默认／T2 卷首尾")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
 
@@ -210,7 +269,7 @@ def main():
     if p is None or not p.exists():
         print(f"[停] 找不到正文（章号 {args.chapter}）——先确认项目根与 04_正文_成品/")
         sys.exit(1)
-    sys.exit(main_check(args.chapter, p, root))
+    sys.exit(main_check(args.chapter, p, root, getattr(args, "tier", "T1")))
 
 
 if __name__ == "__main__":

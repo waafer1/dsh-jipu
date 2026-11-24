@@ -14,8 +14,10 @@
   R7 全章没有一个问句、没有一处对白（没有心跳）
   R8 苦词 ≥4 且得词 0（苦多无得，读者看不到翻身）
 
-打分五项（各 20）：开篇抓力／语言通畅／连续性／节奏／爽点兑现。
-前四项用读数算，**第五项机器判不了，留给人填**——不许编分。
+出读数，不打分（1.37.0 起）：开篇交没交底／句检 warn 条数／段首他她占比／
+最长连续叙述／对白占比。**不给 20 分制绝对分**——实测同一章机器四项全 20/20、
+人判 86/100，绝对分没有区分力（研究报告 §F6）。要比哪一稿更想读下一章，用
+`成对盲评.py`。
 
 用法：
     python 读者判定.py 001
@@ -112,17 +114,17 @@ def judge(path, root):
         print(f"         原因：{why}")
         print(f"         如果改成这样我会继续读：______（柳直读填）")
 
-    # 五项打分：四项有据，一项留白
-    s_open = 20 if (re.search(CONCRETE, head) or re.search(PLACE, head)) else 8
-    s_lang = max(6, 20 - warn_n * 2)
-    s_cont = 20
-    s_pace = max(6, 20 - (4 if m.get("longest_narration", 0) > 600 else 0)
-                 - (4 if m.get("head_pronoun_ratio", 0) > 0.25 else 0))
-    print("\n--- 打分（前四项有读数，第五项机器不许编）---")
-    print(f"  开篇抓力 {s_open}/20　语言通畅 {s_lang}/20（句检 warn {warn_n}）"
-          f"　连续性 {s_cont}/20（见数字体检）　节奏 {s_pace}/20")
-    print("  爽点兑现 __/20　（柳直读填：这一章读者拿走了什么）")
-    print("  合计（含留白）__/100")
+    # 1.37.0：删掉五项各 20 分的绝对分（研究报告 §F6）。
+    # 理由：`s_cont = 20` 是恒满分、`s_lang = 20 - warn*2` 是线性平移，
+    # 实测四章一律 20/20，零区分力；而学界最好的开箱评审与人类偏好一致率只有 73%，
+    # 绝对分还要玩家自己校准——所以这里只出"有据可查的几项读数"，判断交给成对盲评。
+    print("\n--- 读数（有据可查，不是分数；判断交给 成对盲评.py）---")
+    print(f"  开篇是否交底：{'是' if (re.search(CONCRETE, head) or re.search(PLACE, head)) else '否'}"
+          f"（章首 200 字里找具体物／地点）")
+    print(f"  句检 warn：{warn_n} 条　段落以他/她开头：{m.get('head_pronoun_ratio', 0):.0%}")
+    print(f"  最长连续叙述：{m.get('longest_narration', 0)} 字"
+          f"　对白占比：{m.get('dialogue_ratio', 0):.1%}（只报数，不设线）")
+    print("  以上都不进合门。要判两份稿子谁更好 → 成对盲评.py（三次判读取多数）")
     return len(warns)
 
 
